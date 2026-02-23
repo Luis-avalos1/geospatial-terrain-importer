@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cpp:
+    name: C++ core + unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libgdal-dev libglm-dev
+
+      - name: Configure (headless — no Qt/OpenGL)
+        run: >
+          cmake -B build
+          -DBUILD_GUI=OFF
+          -DBUILD_TESTING=ON
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build -j
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  python:
+    name: Python pipeline + tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}   # activate the conda env for every step
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up GDAL + Python via micromamba
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-name: terrain
+          create-args: >-
+            python=3.11
+            gdal
+            numpy
+            pillow
+            pytest
+            ruff
+
+      - name: Lint
+        run: ruff check scripts
+
+      - name: Test
+        run: pytest

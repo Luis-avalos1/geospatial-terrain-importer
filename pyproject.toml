@@ -1,0 +1,17 @@
+# Tooling configuration for the Python terrain pipeline (scripts/) and its tests.
+
+[tool.pytest.ini_options]
+testpaths = ["tests/python"]
+python_files = ["test_*.py"]
+addopts = "-q --color=yes"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+# A pragmatic set: pyflakes (F), pycodestyle (E/W), isort (I), bugbear (B),
+# pyupgrade (UP). The pipeline uses `from __future__ import annotations`, so
+# modern type-hint syntax is fine on 3.9+.
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]  # line length handled by the formatter, not the linter

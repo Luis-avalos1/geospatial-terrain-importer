@@ -1,0 +1,9 @@
+# Runtime dependencies for the Python terrain pipeline (scripts/).
+#
+# GDAL's Python bindings are notoriously version-coupled to the system GDAL
+# library. Prefer installing GDAL via your OS package manager (Homebrew,
+# apt, conda) and only then `pip install gdal==$(gdal-config --version)`.
+numpy>=1.21
+Pillow>=9.0           # optional: faster/portable image I/O for texture_atlas.py
+# GDAL is intentionally NOT pinned here — install it to match your system:
+#   pip install "gdal==$(gdal-config --version)"
