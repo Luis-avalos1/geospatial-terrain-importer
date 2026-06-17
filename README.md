@@ -1,6 +1,7 @@
 # Geospatial Terrain Importer
 
 [![CI](https://github.com/Luis-avalos1/geospatial-terrain-importer/actions/workflows/ci.yml/badge.svg)](https://github.com/Luis-avalos1/geospatial-terrain-importer/actions/workflows/ci.yml)
+[![Live demo](https://img.shields.io/badge/demo-live-4c9be8)](https://luis-avalos1.github.io/geospatial-terrain-importer/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus)
 ![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)
@@ -12,6 +13,22 @@ over it, and fly around the result in an OpenGL viewport.
 
 > **Status:** core algorithms are unit-tested and CI-verified; the GUI is built
 > on Qt + OpenGL 4.1. See the [roadmap](#roadmap) for what's next.
+
+---
+
+## Live demo
+
+An interactive WebGL viewer (Three.js) running this project's pipeline in the
+browser:
+
+### **[luis-avalos1.github.io/geospatial-terrain-importer](https://luis-avalos1.github.io/geospatial-terrain-importer/)**
+
+Orbit the camera, switch between **Mount Fuji** and **San Francisco**, toggle
+hillshade / elevation-colormap / wireframe surfaces, step through the
+level-of-detail meshes, and adjust vertical exaggeration. The terrain is real
+SRTM/NED elevation (via the public AWS Terrain Tiles open dataset) resampled
+into LOD heightfields and draped with a generated texture - the same processing
+described below, exported to static assets the page renders client-side.
 
 ---
 

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Geospatial Terrain Importer - Live Demo</title>
+  <meta name="description" content="Interactive 3D terrain rendered from real elevation data (GeoTIFF DEM) - level-of-detail meshes, hillshade texture draping, orbit camera." />
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="view"></canvas>
+
+  <div id="loading">Loading terrain&hellip;</div>
+
+  <header id="titlebar">
+    <h1>Geospatial Terrain Importer</h1>
+    <p>Real-world elevation data &rarr; interactive level-of-detail 3D terrain. Drag to orbit, scroll to zoom.</p>
+  </header>
+
+  <section id="panel">
+    <div class="group">
+      <label class="grouplabel">Location</label>
+      <div class="row" id="locations"></div>
+    </div>
+
+    <div class="group">
+      <label class="grouplabel">Surface</label>
+      <div class="row" id="surface">
+        <button data-mode="hillshade" class="active">Hillshade</button>
+        <button data-mode="colormap">Elevation</button>
+        <button data-mode="wire">Wireframe</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <label class="grouplabel">Level of detail
+        <span class="hint">(what the renderer swaps by camera distance)</span>
+      </label>
+      <div class="row" id="lods"></div>
+    </div>
+
+    <div class="group">
+      <label class="grouplabel" for="exag">Vertical exaggeration: <span id="exagval"></span>&times;</label>
+      <input type="range" id="exag" min="1" max="20" step="0.5" />
+    </div>
+
+    <dl id="stats"></dl>
+    <p id="source"></p>
+  </section>
+
+  <footer id="credit">
+    Built from this project's pipeline: GeoTIFF DEM &rarr; resampled LOD heightfields &rarr; WebGL mesh with draped texture.
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

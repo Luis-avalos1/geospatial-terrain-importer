@@ -1,0 +1,40 @@
+{
+  "name": "sf",
+  "title": "San Francisco, USA",
+  "location": {
+    "lat": 37.7749,
+    "lon": -122.4194
+  },
+  "source": "AWS Terrain Tiles (SRTM/NED-derived), public open data",
+  "native_px": 1536,
+  "metres_per_pixel": 19.1,
+  "span_km": 29.4,
+  "elevation_min_m": -111,
+  "elevation_max_m": 381,
+  "relief_m": 492,
+  "default_exaggeration": 3.0,
+  "lods": [
+    {
+      "level": 0,
+      "size": 256,
+      "file": "lod0.f32",
+      "triangles": 130050
+    },
+    {
+      "level": 1,
+      "size": 128,
+      "file": "lod1.f32",
+      "triangles": 32258
+    },
+    {
+      "level": 2,
+      "size": 64,
+      "file": "lod2.f32",
+      "triangles": 7938
+    }
+  ],
+  "textures": {
+    "hillshade": "tex_hillshade.png",
+    "colormap": "tex_colormap.png"
+  }
+}

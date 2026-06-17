@@ -1,0 +1,40 @@
+{
+  "name": "fuji",
+  "title": "Mount Fuji, Japan",
+  "location": {
+    "lat": 35.3606,
+    "lon": 138.7274
+  },
+  "source": "AWS Terrain Tiles (SRTM/NED-derived), public open data",
+  "native_px": 1536,
+  "metres_per_pixel": 38.2,
+  "span_km": 58.7,
+  "elevation_min_m": 20,
+  "elevation_max_m": 3708,
+  "relief_m": 3688,
+  "default_exaggeration": 2.0,
+  "lods": [
+    {
+      "level": 0,
+      "size": 256,
+      "file": "lod0.f32",
+      "triangles": 130050
+    },
+    {
+      "level": 1,
+      "size": 128,
+      "file": "lod1.f32",
+      "triangles": 32258
+    },
+    {
+      "level": 2,
+      "size": 64,
+      "file": "lod2.f32",
+      "triangles": 7938
+    }
+  ],
+  "textures": {
+    "hillshade": "tex_hillshade.png",
+    "colormap": "tex_colormap.png"
+  }
+}
