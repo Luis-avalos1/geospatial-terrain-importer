@@ -10,7 +10,10 @@ import logging
 import math
 import struct
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 def _import_gdal():
@@ -95,7 +98,7 @@ def read_elevation_band(
     band_index: int = 1,
     target_width: int = 0,
     target_height: int = 0,
-) -> Tuple["np.ndarray", dict]:  # type: ignore[name-defined]
+) -> tuple[np.ndarray, dict]:
     """
     Read a single raster band as a float32 numpy array.
 
@@ -152,9 +155,9 @@ def utm_zone_from_lon(lon: float) -> int:
 def wgs84_to_utm(
     lon: float,
     lat: float,
-    zone: Optional[int] = None,
-    north: Optional[bool] = None,
-) -> Tuple[float, float]:
+    zone: int | None = None,
+    north: bool | None = None,
+) -> tuple[float, float]:
     """
     Convert WGS-84 lon/lat to UTM easting/northing.
 
@@ -188,7 +191,7 @@ TMSH_MAGIC   = b"TMSH"
 TMSH_VERSION = 1
 
 
-def write_tmsh(path: str | Path, heights: "np.ndarray", width: int, height: int) -> None:  # type: ignore[name-defined]
+def write_tmsh(path: str | Path, heights: np.ndarray, width: int, height: int) -> None:
     """
     Write heights to the TMSH binary format:
         magic(4) version(u32) width(u32) height(u32) count(u32) heights(f32[])
@@ -201,7 +204,7 @@ def write_tmsh(path: str | Path, heights: "np.ndarray", width: int, height: int)
         f.write(heights.astype("<f4").tobytes())
 
 
-def read_tmsh(path: str | Path) -> Tuple["np.ndarray", int, int]:  # type: ignore[name-defined]
+def read_tmsh(path: str | Path) -> tuple[np.ndarray, int, int]:
     """
     Read a TMSH file. Returns (heights_array, width, height).
     heights_array is shape (height, width) float32.

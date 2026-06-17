@@ -25,7 +25,11 @@ public:
 
     // Build all LOD levels from elevation data.
     // Level 0 is highest resolution (sampleStep=1), each subsequent level doubles the step.
-    void build(const ElevationData &data, Options opts = {});
+    void build(const ElevationData &data, Options opts);
+
+    // Convenience overload using default options. (See MeshSimplifier::simplify:
+    // a brace-defaulted argument can't be used for a nested Options type.)
+    void build(const ElevationData &data) { build(data, Options{}); }
 
     // Select the appropriate LOD level for a given camera distance.
     // Returns a reference to the coarsest level whose switchDistance <= cameraDistance.

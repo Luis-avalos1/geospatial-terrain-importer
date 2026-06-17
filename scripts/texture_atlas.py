@@ -19,9 +19,8 @@ import argparse
 import json
 import logging
 import sys
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 from terrain_utils import setup_logging
 
@@ -74,7 +73,7 @@ class Shelf:
 
 # ── Image I/O ─────────────────────────────────────────────────────────────────
 
-def _load_rgba_pil(path: Path, target_size: Optional[int]) -> Tuple[bytes, int, int]:
+def _load_rgba_pil(path: Path, target_size: int | None) -> tuple[bytes, int, int]:
     img = _PIL_Image.open(str(path)).convert("RGBA")
     if target_size:
         img = img.resize((target_size, target_size), _PIL_Image.LANCZOS)
@@ -82,7 +81,7 @@ def _load_rgba_pil(path: Path, target_size: Optional[int]) -> Tuple[bytes, int, 
     return data, img.width, img.height
 
 
-def _load_rgba_gdal(path: Path, target_size: Optional[int]) -> Tuple[bytes, int, int]:
+def _load_rgba_gdal(path: Path, target_size: int | None) -> tuple[bytes, int, int]:
     ds = _gdal.Open(str(path), _gdal.GA_ReadOnly)
     if ds is None:
         raise FileNotFoundError(f"GDAL cannot open: {path}")
@@ -108,7 +107,7 @@ def _load_rgba_gdal(path: Path, target_size: Optional[int]) -> Tuple[bytes, int,
     return bytes(buf), w, h
 
 
-def load_rgba(path: Path, target_size: Optional[int]) -> Tuple[bytes, int, int]:
+def load_rgba(path: Path, target_size: int | None) -> tuple[bytes, int, int]:
     if _HAS_PIL:
         return _load_rgba_pil(path, target_size)
     return _load_rgba_gdal(path, target_size)
@@ -117,9 +116,9 @@ def load_rgba(path: Path, target_size: Optional[int]) -> Tuple[bytes, int, int]:
 # ── Shelf-packing ─────────────────────────────────────────────────────────────
 
 def pack_tiles(
-    tile_metas: List[TileMeta],
+    tile_metas: list[TileMeta],
     atlas_size: int,
-) -> Tuple[bytearray, List[TileMeta]]:
+) -> tuple[bytearray, list[TileMeta]]:
     """
     Shelf-pack tiles into an RGBA atlas buffer.
 
@@ -130,7 +129,7 @@ def pack_tiles(
     # Sort by height descending
     order = sorted(range(len(tile_metas)), key=lambda i: -tile_metas[i].height)
 
-    shelves: List[Shelf] = [Shelf(x=0, y=0, h=0)]
+    shelves: list[Shelf] = [Shelf(x=0, y=0, h=0)]
 
     for idx in order:
         tm = tile_metas[idx]
@@ -253,7 +252,7 @@ def main(argv: list[str] | None = None) -> int:
     input_dir: Path  = args.input_dir
     out_path:  Path  = args.output
     atlas_size: int  = args.size
-    tile_target: Optional[int] = args.tile_size or None
+    tile_target: int | None = args.tile_size or None
 
     if not input_dir.is_dir():
         log.error("Input directory not found: %s", input_dir)
@@ -274,7 +273,7 @@ def main(argv: list[str] | None = None) -> int:
     log.info("Packing %d tile(s) into a %dx%d atlas", len(tile_paths), atlas_size, atlas_size)
 
     # Load tiles
-    tile_metas: List[TileMeta] = []
+    tile_metas: list[TileMeta] = []
     total_input_bytes = 0
     for p in tile_paths:
         try:
