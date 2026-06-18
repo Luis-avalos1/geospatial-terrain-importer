@@ -270,8 +270,14 @@ async function ingestGeoTiff(buf, title) {
   const { fromArrayBuffer } = await import('https://cdn.jsdelivr.net/npm/geotiff@2.1.3/+esm');
   const tiff = await fromArrayBuffer(buf);
   const image = await tiff.getImage();
-  const w = image.getWidth(), h = image.getHeight();
-  const src = (await image.readRasters({ samples: [0] }))[0];
+  const nativeW = image.getWidth(), nativeH = image.getHeight();
+  // Read at a capped resolution: geotiff.js resamples on read, so even huge /
+  // high-res DEMs stay fast and memory-bounded (the working array is <= 2048^2).
+  const MAX_READ = 2048;
+  const sc = Math.min(1, MAX_READ / Math.max(nativeW, nativeH));
+  const w = Math.max(2, Math.round(nativeW * sc));
+  const h = Math.max(2, Math.round(nativeH * sc));
+  const src = (await image.readRasters({ samples: [0], width: w, height: h }))[0];
   const nodata = image.getGDALNoData();
 
   let resX = 30, latC = 0;
@@ -305,16 +311,16 @@ async function ingestGeoTiff(buf, title) {
   const sizes = [256, 128, 64];
   const heights = sizes.map(sample);
   const lods = sizes.map((s, i) => ({ level: i, size: s, file: null, triangles: (s - 1) * (s - 1) * 2 }));
-  const T = 512, grid = sample(T), cellM = (mPerPx * w) / T;
+  const T = 512, grid = sample(T), cellM = (mPerPx * nativeW) / T;
   const textures = {
     hillshade: makeTexFromGrid(grid, T, zmin, zmax, cellM, true),
     colormap: makeTexFromGrid(grid, T, zmin, zmax, cellM, false),
   };
   const meta = {
     name: 'upload', title: title || 'Your DEM', location: { lat: latC, lon: 0 },
-    source: `Uploaded GeoTIFF, ${w}x${h}px, parsed in-browser.`,
-    native_px: w, metres_per_pixel: Math.round(mPerPx * 10) / 10,
-    span_km: Math.round(mPerPx * Math.max(w, h) / 100) / 10,
+    source: `Uploaded GeoTIFF, ${nativeW}x${nativeH}px${sc < 1 ? ` (read at ${w}x${h})` : ''}, parsed in-browser.`,
+    native_px: nativeW, metres_per_pixel: Math.round(mPerPx * 10) / 10,
+    span_km: Math.round(mPerPx * Math.max(nativeW, nativeH) / 100) / 10,
     elevation_min_m: Math.round(zmin), elevation_max_m: Math.round(zmax), relief_m: Math.round(zmax - zmin),
     default_exaggeration: Math.max(2, Math.min(12, 1500 / Math.max(zmax - zmin, 1))),
     lods, textures: { hillshade: '', colormap: '' },
@@ -322,7 +328,14 @@ async function ingestGeoTiff(buf, title) {
   return { meta, heights, textures };
 }
 
+const MAX_UPLOAD_BYTES = 400 * 1024 * 1024;   // 400 MB - guard before loading into memory
+
 async function handleUpload(file) {
+  if (file.size > MAX_UPLOAD_BYTES) {
+    showLoading(true, `File too large: ${Math.round(file.size / 1048576)} MB (max 400 MB)`);
+    setTimeout(() => showLoading(false), 5000);
+    return;
+  }
   showLoading(true, 'Parsing ' + file.name);
   try {
     const ds = await ingestGeoTiff(await file.arrayBuffer(), file.name.replace(/\.[^.]+$/, ''));
