@@ -4,7 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Geospatial Terrain Importer - Interactive 3D Terrain</title>
-  <meta name="description" content="Explore real-world elevation data as interactive 3D terrain. Level-of-detail meshes, hillshade texture draping, real-time sun and shadows - built from GeoTIFF DEMs." />
+  <meta name="description" content="A field instrument for reading the planet: real GeoTIFF elevation data rendered as interactive level-of-detail 3D terrain. Upload your own DEM." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <script type="importmap">
   {
@@ -18,26 +21,29 @@
 <body>
   <canvas id="view"></canvas>
 
-  <!-- ── Cinematic intro ─────────────────────────────────────────────────── -->
+  <!-- registration frame (map-margin marks) -->
+  <div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+  <!-- ── Intro ───────────────────────────────────────────────────────────── -->
   <div id="intro">
     <div class="intro-inner">
       <p class="eyebrow">Geospatial Terrain Importer</p>
-      <h1>Real elevation data,<br>rendered as a world.</h1>
+      <h1>A field instrument<br>for reading the planet.</h1>
       <p class="lede">
-        This project turns digital elevation models - the same GeoTIFF rasters
-        used in GIS, simulation, and mapping - into interactive level-of-detail
-        3D terrain. Below is real satellite-derived elevation, processed by the
-        project's own pipeline and rendered live in your browser.
+        Digital elevation models - the GeoTIFF rasters behind GIS, simulation,
+        and mapping - turned into interactive level-of-detail 3D terrain. The
+        scene below is real satellite-derived elevation, processed by this
+        project's own pipeline and rebuilt live in your browser.
       </p>
       <div class="intro-actions">
-        <button id="enter" disabled>Preparing terrain&hellip;</button>
-        <button id="intro-about" class="ghost">What is this?</button>
+        <button id="enter" disabled>PREPARING TERRAIN</button>
+        <button id="intro-about" class="ghost">WHAT IS THIS</button>
       </div>
-      <p class="intro-tip">Drag to orbit &middot; scroll to zoom &middot; built with WebGL</p>
+      <p class="intro-tip">DRAG TO ORBIT &middot; SCROLL TO ZOOM &middot; UPLOAD YOUR OWN DEM</p>
     </div>
   </div>
 
-  <!-- ── About modal ─────────────────────────────────────────────────────── -->
+  <!-- ── About ───────────────────────────────────────────────────────────── -->
   <div id="about" class="modal hidden">
     <div class="modal-card">
       <button class="modal-close" id="about-close" aria-label="Close">&times;</button>
@@ -54,9 +60,10 @@
       <h3>What you're looking at</h3>
       <p>
         A <em>digital elevation model</em> (DEM) is a raster where every pixel
-        stores a ground height in metres. The terrain here comes from the public
-        <em>AWS Terrain Tiles</em> open dataset (SRTM/NED-derived). Each location
-        is a real ~59&nbsp;km-wide patch of the planet.
+        stores a ground height in metres. The built-in scenes come from the
+        public <em>AWS Terrain Tiles</em> open dataset (SRTM/NED-derived); each
+        is a real ~59&nbsp;km-wide patch of the planet. You can also upload your
+        own GeoTIFF and it is parsed entirely in the browser.
       </p>
 
       <h3>The pipeline</h3>
@@ -65,36 +72,44 @@
         <li><strong>Build a mesh</strong> - a triangulated height-field with per-vertex normals and texture coordinates.</li>
         <li><strong>Simplify</strong> with Quadric Error Metrics (Garland &amp; Heckbert 1997) and boundary preservation.</li>
         <li><strong>Generate an LOD pyramid</strong> - multiple resolutions selected by camera distance.</li>
-        <li><strong>Drape a texture</strong> - here a hillshade / elevation colormap; in the app, packed satellite tiles.</li>
+        <li><strong>Drape a texture</strong> - hillshade / elevation colormap here; packed satellite tiles in the app.</li>
       </ol>
 
       <h3>Engineering</h3>
       <ul class="tech">
-        <li><strong>Core (C++17):</strong> GDAL ingest, QEM simplifier, LOD manager, texture-atlas shelf-packer, OGR/PROJ coordinate transforms (WGS-84 &harr; UTM).</li>
+        <li><strong>Core (C++17):</strong> GDAL ingest, QEM simplifier, LOD manager, texture-atlas shelf-packer, OGR/PROJ transforms (WGS-84 &harr; UTM).</li>
         <li><strong>Renderer:</strong> OpenGL 4.1 + Qt orbit-camera viewport with height-colormap shaders.</li>
         <li><strong>Python pipeline:</strong> headless batch conversion, LOD generation, atlas packing (numpy / GDAL / Pillow).</li>
-        <li><strong>Quality:</strong> C++ unit tests + pytest, run on GitHub Actions CI.</li>
-        <li><strong>This demo:</strong> Three.js. Meshes are rebuilt in-browser from float32 heightfields the pipeline exported.</li>
+        <li><strong>Quality:</strong> C++ unit tests + pytest on GitHub Actions CI.</li>
+        <li><strong>This demo:</strong> Three.js; in-browser GeoTIFF parsing via geotiff.js.</li>
       </ul>
 
       <p class="repo-link">
-        Source &amp; docs:
-        <a href="https://github.com/Luis-avalos1/geospatial-terrain-importer" target="_blank" rel="noopener">
-          github.com/Luis-avalos1/geospatial-terrain-importer
-        </a>
+        Built by <strong>Luis Avalos</strong> &middot;
+        <a href="https://github.com/Luis-avalos1/geospatial-terrain-importer" target="_blank" rel="noopener">github.com/Luis-avalos1</a>
       </p>
     </div>
   </div>
 
   <!-- ── HUD ─────────────────────────────────────────────────────────────── -->
   <header id="titlebar" class="hidden">
-    <h1>Geospatial Terrain Importer</h1>
+    <span class="tb-mark">GTI</span>
+    <span class="tb-name">Geospatial Terrain Importer</span>
   </header>
+
+  <!-- instrument readout: location + coords + compass -->
+  <div id="readout" class="hidden">
+    <div class="ro-title" id="ro-title"></div>
+    <div class="ro-coord" id="ro-coord"></div>
+    <div class="compass"><span class="needle" id="needle"></span><span class="card-n">N</span></div>
+  </div>
 
   <section id="panel" class="hidden">
     <div class="group">
       <label class="grouplabel">Location</label>
       <div class="grid2" id="locations"></div>
+      <button id="upload-btn" class="upload">+ UPLOAD GEOTIFF DEM</button>
+      <input type="file" id="upload-input" accept=".tif,.tiff,image/tiff" hidden />
     </div>
 
     <div class="group">
@@ -107,7 +122,7 @@
     </div>
 
     <div class="group">
-      <label class="grouplabel">Level of detail <span class="hint">(distance-based in the app)</span></label>
+      <label class="grouplabel">Level of detail <span class="hint">distance-based in app</span></label>
       <div class="row" id="lods"></div>
     </div>
 
@@ -124,12 +139,17 @@
     <dl id="stats"></dl>
 
     <div class="panel-foot">
-      <button id="open-about" class="ghost small">About the project</button>
+      <button id="open-about" class="ghost small">ABOUT THE PROJECT</button>
     </div>
     <p id="source"></p>
   </section>
 
   <div id="loading" class="hidden">Loading terrain&hellip;</div>
+
+  <!-- persistent byline on every screen -->
+  <a id="byline" href="https://github.com/Luis-avalos1/geospatial-terrain-importer" target="_blank" rel="noopener">
+    LUIS AVALOS &middot; github.com/Luis-avalos1
+  </a>
 
   <script type="module" src="main.js"></script>
 </body>
