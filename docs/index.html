@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Geospatial Terrain Importer - Interactive 3D Terrain</title>
-  <meta name="description" content="A field instrument for reading the planet: real GeoTIFF elevation data rendered as interactive level-of-detail 3D terrain. Upload your own DEM." />
+  <title>Geospatial Terrain Importer - Web Showcase</title>
+  <meta name="description" content="A WebGL showcase of the Geospatial Terrain Importer: real GeoTIFF elevation data as interactive level-of-detail 3D terrain. The rendering is a browser reimplementation; the actual engine is the C++/Qt desktop app." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -27,13 +27,14 @@
   <!-- ── Intro ───────────────────────────────────────────────────────────── -->
   <div id="intro">
     <div class="intro-inner">
-      <p class="eyebrow">Geospatial Terrain Importer</p>
+      <p class="eyebrow">Geospatial Terrain Importer &middot; Web Showcase</p>
       <h1>A field instrument<br>for reading the planet.</h1>
       <p class="lede">
         Digital elevation models - the GeoTIFF rasters behind GIS, simulation,
-        and mapping - turned into interactive level-of-detail 3D terrain. The
-        scene below is real satellite-derived elevation, processed by this
-        project's own pipeline and rebuilt live in your browser.
+        and mapping - turned into interactive level-of-detail 3D terrain. This is
+        a <strong>WebGL showcase</strong>: the terrain is real elevation processed
+        by the project's pipeline, with the rendering reimplemented in the browser.
+        The actual engine is the C++/Qt/OpenGL desktop app.
       </p>
       <div class="intro-actions">
         <button id="enter" disabled>PREPARING TERRAIN</button>
@@ -53,8 +54,14 @@
         <strong>Geospatial Terrain Importer</strong> ingests real-world
         elevation data and turns it into interactive, level-of-detail 3D
         terrain. It ships as a C++/Qt/OpenGL desktop application plus a headless
-        Python pipeline - and this page is a WebGL showcase of that pipeline's
-        output.
+        Python pipeline.
+      </p>
+      <p>
+        <strong>This page is a showcase, not the engine itself.</strong> The
+        built-in terrains are real output of the project's pipeline, but the
+        in-browser rendering (mesh build, LOD, hillshade, GeoTIFF upload) is a
+        WebGL/JavaScript reimplementation of the same techniques. The actual
+        engine is the C++/Qt desktop application.
       </p>
 
       <h3>What you're looking at</h3>
@@ -81,7 +88,7 @@
         <li><strong>Renderer:</strong> OpenGL 4.1 + Qt orbit-camera viewport with height-colormap shaders.</li>
         <li><strong>Python pipeline:</strong> headless batch conversion, LOD generation, atlas packing (numpy / GDAL / Pillow).</li>
         <li><strong>Quality:</strong> C++ unit tests + pytest on GitHub Actions CI.</li>
-        <li><strong>This demo:</strong> Three.js; in-browser GeoTIFF parsing via geotiff.js.</li>
+        <li><strong>This showcase:</strong> Three.js; in-browser GeoTIFF parsing via geotiff.js.</li>
       </ul>
 
       <p class="repo-link">
@@ -95,6 +102,7 @@
   <header id="titlebar" class="hidden">
     <span class="tb-mark">GTI</span>
     <span class="tb-name">Geospatial Terrain Importer</span>
+    <span class="tb-tag" title="A browser visualizer of the project's pipeline output - not the C++ engine itself">SHOWCASE</span>
   </header>
 
   <!-- instrument readout: location + coords + compass -->
