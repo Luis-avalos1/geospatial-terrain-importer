@@ -34,7 +34,7 @@
     }
   ],
   "textures": {
-    "hillshade": "tex_hillshade.png",
-    "colormap": "tex_colormap.png"
+    "hillshade": "tex_hillshade.jpg",
+    "colormap": "tex_colormap.jpg"
   }
 }

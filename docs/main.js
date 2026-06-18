@@ -60,6 +60,9 @@ let heightsByLod = [], textures = {};
 let curS = 1, curZmid = 0;
 let state = { lod: 0, mode: 'hillshade', exag: 3, sun: 0.68 };
 let uploadDataset = null, uploadChip = null;
+const datasetCache = new Map();   // name -> dataset (so re-switching is instant)
+const inflight = new Map();        // name -> in-flight Promise (dedupe click vs preload)
+const labelFor = (name) => (TERRAINS.find((t) => t.name === name) || {}).label || name;
 
 const $ = (id) => document.getElementById(id);
 const exagInput = $('exag');
@@ -174,17 +177,53 @@ function applyDataset(ds) {
   showLoading(false);
 }
 
-async function loadTerrainByName(name) {
-  showLoading(true, 'Loading terrain');
+// Fetch + decode a built-in terrain. No UI side effects (used for preloading too).
+// Heights and both textures download in parallel; failures reject loudly.
+async function fetchDataset(name) {
   const base = `terrain/${name}/`;
-  const m = await (await fetch(base + 'meta.json')).json();
-  const heights = await Promise.all(m.lods.map(async (l) =>
-    new Float32Array(await (await fetch(base + l.file)).arrayBuffer())));
-  const tx = {
-    hillshade: await texLoader.loadAsync(base + m.textures.hillshade),
-    colormap: await texLoader.loadAsync(base + m.textures.colormap),
-  };
-  applyDataset({ meta: m, heights, textures: tx });
+  const res = await fetch(base + 'meta.json');
+  if (!res.ok) throw new Error(`meta.json ${res.status}`);
+  const m = await res.json();
+  const [heights, hillshade, colormap] = await Promise.all([
+    Promise.all(m.lods.map(async (l) => {
+      const r = await fetch(base + l.file);
+      if (!r.ok) throw new Error(`${l.file} ${r.status}`);
+      return new Float32Array(await r.arrayBuffer());
+    })),
+    texLoader.loadAsync(base + m.textures.hillshade),
+    texLoader.loadAsync(base + m.textures.colormap),
+  ]);
+  return { meta: m, heights, textures: { hillshade, colormap } };
+}
+
+// Cache-aware, de-duplicated fetch: a click and a background preload of the
+// same terrain share one download instead of racing two.
+function getDataset(name) {
+  if (datasetCache.has(name)) return Promise.resolve(datasetCache.get(name));
+  if (inflight.has(name)) return inflight.get(name);
+  const p = fetchDataset(name)
+    .then((ds) => { datasetCache.set(name, ds); inflight.delete(name); return ds; })
+    .catch((e) => { inflight.delete(name); throw e; });
+  inflight.set(name, p);
+  return p;
+}
+
+async function loadTerrainByName(name) {
+  if (datasetCache.has(name)) { applyDataset(datasetCache.get(name)); return; }
+  showLoading(true, 'Loading ' + labelFor(name));
+  try {
+    applyDataset(await getDataset(name));
+  } finally {
+    showLoading(false);   // always clears - never strands the spinner
+  }
+}
+
+// Warm the cache for the other terrains, one at a time so a slow link is not
+// saturated and the terrain the user actually clicks stays responsive.
+async function preloadOthers(except) {
+  for (const t of TERRAINS) {
+    if (t.name !== except) { try { await getDataset(t.name); } catch { /* ignore */ } }
+  }
 }
 
 // ── GeoTIFF upload (parsed in-browser) ──────────────────────────────────────────
@@ -316,7 +355,14 @@ function buildLocationButtons() {
     const b = document.createElement('button');
     b.textContent = t.label; b.dataset.name = t.name;
     if (i === 0) b.classList.add('active');
-    b.addEventListener('click', () => { selectLocation(b); state.lod = 0; loadTerrainByName(t.name); });
+    b.addEventListener('click', () => {
+      selectLocation(b); state.lod = 0;
+      loadTerrainByName(t.name).catch((err) => {
+        console.error(err);
+        showLoading(true, 'Could not load ' + t.label + ' - check your connection');
+        setTimeout(() => showLoading(false), 4500);
+      });
+    });
     host.appendChild(b);
   });
 }
@@ -413,5 +459,8 @@ updateSun();
 resize();
 animate();
 loadTerrainByName(TERRAINS[0].name)
-  .then(() => { const b = $('enter'); b.disabled = false; b.textContent = 'EXPLORE TERRAIN'; })
+  .then(() => {
+    const b = $('enter'); b.disabled = false; b.textContent = 'EXPLORE TERRAIN';
+    preloadOthers(TERRAINS[0].name);   // warm the cache in the background
+  })
   .catch((err) => { $('enter').textContent = 'LOAD FAILED'; console.error(err); });

@@ -64,6 +64,8 @@ env/
 *.tiff
 *.img
 data/
+# ...but ship the small sample DEM for the web demo's upload feature
+!docs/sample_dem.tif
 
 # Generated atlas / mesh outputs
 *.bin
