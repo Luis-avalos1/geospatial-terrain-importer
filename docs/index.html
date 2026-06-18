@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Geospatial Terrain Importer - Live Demo</title>
-  <meta name="description" content="Interactive 3D terrain rendered from real elevation data (GeoTIFF DEM) - level-of-detail meshes, hillshade texture draping, orbit camera." />
+  <title>Geospatial Terrain Importer - Interactive 3D Terrain</title>
+  <meta name="description" content="Explore real-world elevation data as interactive 3D terrain. Level-of-detail meshes, hillshade texture draping, real-time sun and shadows - built from GeoTIFF DEMs." />
   <link rel="stylesheet" href="style.css" />
   <script type="importmap">
   {
@@ -18,17 +18,83 @@
 <body>
   <canvas id="view"></canvas>
 
-  <div id="loading">Loading terrain&hellip;</div>
+  <!-- ── Cinematic intro ─────────────────────────────────────────────────── -->
+  <div id="intro">
+    <div class="intro-inner">
+      <p class="eyebrow">Geospatial Terrain Importer</p>
+      <h1>Real elevation data,<br>rendered as a world.</h1>
+      <p class="lede">
+        This project turns digital elevation models - the same GeoTIFF rasters
+        used in GIS, simulation, and mapping - into interactive level-of-detail
+        3D terrain. Below is real satellite-derived elevation, processed by the
+        project's own pipeline and rendered live in your browser.
+      </p>
+      <div class="intro-actions">
+        <button id="enter" disabled>Preparing terrain&hellip;</button>
+        <button id="intro-about" class="ghost">What is this?</button>
+      </div>
+      <p class="intro-tip">Drag to orbit &middot; scroll to zoom &middot; built with WebGL</p>
+    </div>
+  </div>
 
-  <header id="titlebar">
+  <!-- ── About modal ─────────────────────────────────────────────────────── -->
+  <div id="about" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-close" id="about-close" aria-label="Close">&times;</button>
+      <h2>About this project</h2>
+
+      <p>
+        <strong>Geospatial Terrain Importer</strong> ingests real-world
+        elevation data and turns it into interactive, level-of-detail 3D
+        terrain. It ships as a C++/Qt/OpenGL desktop application plus a headless
+        Python pipeline - and this page is a WebGL showcase of that pipeline's
+        output.
+      </p>
+
+      <h3>What you're looking at</h3>
+      <p>
+        A <em>digital elevation model</em> (DEM) is a raster where every pixel
+        stores a ground height in metres. The terrain here comes from the public
+        <em>AWS Terrain Tiles</em> open dataset (SRTM/NED-derived). Each location
+        is a real ~59&nbsp;km-wide patch of the planet.
+      </p>
+
+      <h3>The pipeline</h3>
+      <ol class="pipeline">
+        <li><strong>Ingest</strong> a GeoTIFF DEM via GDAL, with bilinear resampling and nodata/NaN sanitisation.</li>
+        <li><strong>Build a mesh</strong> - a triangulated height-field with per-vertex normals and texture coordinates.</li>
+        <li><strong>Simplify</strong> with Quadric Error Metrics (Garland &amp; Heckbert 1997) and boundary preservation.</li>
+        <li><strong>Generate an LOD pyramid</strong> - multiple resolutions selected by camera distance.</li>
+        <li><strong>Drape a texture</strong> - here a hillshade / elevation colormap; in the app, packed satellite tiles.</li>
+      </ol>
+
+      <h3>Engineering</h3>
+      <ul class="tech">
+        <li><strong>Core (C++17):</strong> GDAL ingest, QEM simplifier, LOD manager, texture-atlas shelf-packer, OGR/PROJ coordinate transforms (WGS-84 &harr; UTM).</li>
+        <li><strong>Renderer:</strong> OpenGL 4.1 + Qt orbit-camera viewport with height-colormap shaders.</li>
+        <li><strong>Python pipeline:</strong> headless batch conversion, LOD generation, atlas packing (numpy / GDAL / Pillow).</li>
+        <li><strong>Quality:</strong> C++ unit tests + pytest, run on GitHub Actions CI.</li>
+        <li><strong>This demo:</strong> Three.js. Meshes are rebuilt in-browser from float32 heightfields the pipeline exported.</li>
+      </ul>
+
+      <p class="repo-link">
+        Source &amp; docs:
+        <a href="https://github.com/Luis-avalos1/geospatial-terrain-importer" target="_blank" rel="noopener">
+          github.com/Luis-avalos1/geospatial-terrain-importer
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ── HUD ─────────────────────────────────────────────────────────────── -->
+  <header id="titlebar" class="hidden">
     <h1>Geospatial Terrain Importer</h1>
-    <p>Real-world elevation data &rarr; interactive level-of-detail 3D terrain. Drag to orbit, scroll to zoom.</p>
   </header>
 
-  <section id="panel">
+  <section id="panel" class="hidden">
     <div class="group">
       <label class="grouplabel">Location</label>
-      <div class="row" id="locations"></div>
+      <div class="grid2" id="locations"></div>
     </div>
 
     <div class="group">
@@ -41,24 +107,29 @@
     </div>
 
     <div class="group">
-      <label class="grouplabel">Level of detail
-        <span class="hint">(what the renderer swaps by camera distance)</span>
-      </label>
+      <label class="grouplabel">Level of detail <span class="hint">(distance-based in the app)</span></label>
       <div class="row" id="lods"></div>
     </div>
 
     <div class="group">
-      <label class="grouplabel" for="exag">Vertical exaggeration: <span id="exagval"></span>&times;</label>
+      <label class="grouplabel" for="exag">Vertical exaggeration &middot; <span id="exagval"></span>&times;</label>
       <input type="range" id="exag" min="1" max="20" step="0.5" />
     </div>
 
+    <div class="group">
+      <label class="grouplabel" for="sun">Time of day</label>
+      <input type="range" id="sun" min="0" max="100" step="1" value="68" />
+    </div>
+
     <dl id="stats"></dl>
+
+    <div class="panel-foot">
+      <button id="open-about" class="ghost small">About the project</button>
+    </div>
     <p id="source"></p>
   </section>
 
-  <footer id="credit">
-    Built from this project's pipeline: GeoTIFF DEM &rarr; resampled LOD heightfields &rarr; WebGL mesh with draped texture.
-  </footer>
+  <div id="loading" class="hidden">Loading terrain&hellip;</div>
 
   <script type="module" src="main.js"></script>
 </body>
