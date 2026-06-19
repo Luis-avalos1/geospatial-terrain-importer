@@ -11,7 +11,7 @@ elevation data (GeoTIFF / DEM rasters) into interactive, level-of-detail 3D
 terrain. Load a digital elevation model, optionally drape a satellite image
 over it, and fly around the result in an OpenGL viewport.
 
-![Terrain Importer desktop application — Mount Everest](screenshots/desktop.png)
+![Terrain Importer desktop application — Mount Everest](screenshots/desktop-everest.png)
 
 > **Status:** core algorithms are unit-tested and CI-verified; the C++/Qt +
 > OpenGL 4.1 desktop app builds, runs, and renders (on macOS as
