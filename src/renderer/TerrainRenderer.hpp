@@ -33,8 +33,6 @@ public:
     void setShowNormals(bool on);
     void setHeightScale(float s);
 
-    Camera &camera() { return m_camera; }
-
 signals:
     void fpsUpdated(double fps);
 
@@ -50,6 +48,7 @@ protected:
 
 private:
     void uploadLodLevels();
+    void frameCameraToScene();   // point + size the camera at the loaded terrain
 
     Camera        m_camera;
     ShaderProgram m_shader;

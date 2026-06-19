@@ -77,10 +77,13 @@ void TerrainRenderer::clearTerrain()
 
 void TerrainRenderer::resetView()
 {
-    if (m_gpuMeshes.empty()) return;
-    const float cy = (m_heightMin + m_heightMax) * 0.5f;
-    m_camera.reset({0.f, cy, 0.f}, m_sceneExtent * 1.1f);
-    m_camera.setSensitivity(0.3f, 0.5f, m_sceneExtent * 0.04f);
+    if (m_gpuMeshes.empty()) {
+        // No terrain yet — return to a neutral default pose.
+        m_camera.reset({0.f, 0.f, 0.f}, 2000.f);
+        m_camera.setSceneRadius(2000.f);
+    } else {
+        frameCameraToScene();
+    }
     update();
 }
 
@@ -159,9 +162,11 @@ void TerrainRenderer::paintGL()
         m_shader.setUniform("uAtlasRect", glm::vec4(0,0,1,1));
     }
 
-    // LOD selection — scale the camera distance to the terrain's extent so the
-    // LOD switch distances (calibrated in the ~hundreds) work at geo scale.
-    const float lodDist = (m_camera.distance() / m_sceneExtent) * 4000.0f;
+    // LOD selection — use the eye→terrain-centre distance (which also responds
+    // to panning, unlike the bare orbit radius) scaled to the terrain extent, so
+    // LodManager's switch distances (0/500/1000/2000, baseDist=500) work at geo
+    // scale. The 4000 (~8·baseDist) puts the coarsest level ~one extent away.
+    const float lodDist = (m_camera.distanceTo(glm::vec3(0.f)) / m_sceneExtent) * 4000.0f;
     const LodLevel &lod = m_lodMgr->selectLod(lodDist);
 
     // Find the GpuMesh matching the selected LOD level
@@ -193,21 +198,24 @@ void TerrainRenderer::paintGL()
 void TerrainRenderer::uploadLodLevels()
 {
     m_gpuMeshes.clear();
-    if (!m_lodMgr) return;
+    if (!m_lodMgr || m_lodMgr->levels().empty()) return;
 
     m_heightMin = std::numeric_limits<float>::max();
     m_heightMax = std::numeric_limits<float>::lowest();
     float minX = std::numeric_limits<float>::max(), maxX = std::numeric_limits<float>::lowest();
     float minZ = std::numeric_limits<float>::max(), maxZ = std::numeric_limits<float>::lowest();
 
-    for (const LodLevel &lod : m_lodMgr->levels()) {
-        for (const Vertex &v : lod.mesh.vertices) {
-            m_heightMin = std::min(m_heightMin, v.y);
-            m_heightMax = std::max(m_heightMax, v.y);
-            minX = std::min(minX, v.x); maxX = std::max(maxX, v.x);
-            minZ = std::min(minZ, v.z); maxZ = std::max(maxZ, v.z);
-        }
+    // Bounds come from level 0 only: it is the full-resolution superset, so the
+    // coarser levels share its footprint and height range — no need to rescan.
+    for (const Vertex &v : m_lodMgr->levels().front().mesh.vertices) {
+        m_heightMin = std::min(m_heightMin, v.y);
+        m_heightMax = std::max(m_heightMax, v.y);
+        minX = std::min(minX, v.x); maxX = std::max(maxX, v.x);
+        minZ = std::min(minZ, v.z); maxZ = std::max(maxZ, v.z);
+    }
 
+    // Upload every level to the GPU.
+    for (const LodLevel &lod : m_lodMgr->levels()) {
         auto gm = std::make_unique<GpuMesh>();
         gm->upload(lod.mesh);
         m_gpuMeshes.push_back(std::move(gm));
@@ -226,11 +234,18 @@ void TerrainRenderer::uploadLodLevels()
         if (!(m_sceneExtent > 0.f)) m_sceneExtent = 1.0f;
     }
 
+    frameCameraToScene();
+}
+
+void TerrainRenderer::frameCameraToScene()
+{
     const float cy = (m_heightMin + m_heightMax) * 0.5f;
     m_camera.reset({0.f, cy, 0.f}, m_sceneExtent * 1.1f);
     // Scale zoom to the scene so the wheel moves a useful fraction per notch
-    // (default 50 units/notch is imperceptible on a ~20 km-wide terrain).
+    // (default 50 units/notch is imperceptible on a ~20 km-wide terrain), and
+    // tell the camera the scene size so its far plane never clips the terrain.
     m_camera.setSensitivity(0.3f, 0.5f, m_sceneExtent * 0.04f);
+    m_camera.setSceneRadius(m_sceneExtent);
 }
 
 // ── Mouse input ───────────────────────────────────────────────────────────────

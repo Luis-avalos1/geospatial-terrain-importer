@@ -192,6 +192,10 @@ void MainWindow::loadFile(const QString &path)
             lodMgr->build(elev, lodOpts);
 
             if (opts.buildAtlas) {
+                // NOTE: this re-opens/decodes the raster (GeoTiffReader::read
+                // already opened it above). Acceptable for now — atlas building
+                // is opt-in and one-time; sharing the GDAL dataset between the
+                // elevation and image loaders would avoid the second decode.
                 ImageTile img = SatelliteImageLoader::load(stdPath);
                 auto atlas = std::make_shared<TextureAtlas>();
                 std::vector<const ImageTile *> tiles = {&img};

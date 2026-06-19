@@ -66,10 +66,11 @@ glm::mat4 Camera::projectionMatrix(int w, int h) const
 {
     if (h == 0) h = 1;
     const float aspect = static_cast<float>(w) / static_cast<float>(h);
-    // Scale near/far with the orbit distance so depth precision stays good at
-    // any zoom and the scene (radius ~ a few × distance) is never clipped.
-    const float nearZ = std::max(0.05f, m_distance * 0.01f);
-    const float farZ  = m_distance * 50.0f;
+    // Near scales with orbit distance (good depth precision at any zoom); far is
+    // sized to always reach the whole scene — m_distance to the far side plus the
+    // scene radius (and pan slack) — so zooming in never clips the far terrain.
+    const float nearZ = std::max(0.05f, m_distance * 0.02f);
+    const float farZ  = m_distance + 2.5f * m_sceneRadius + 10.0f;
     return glm::perspective(glm::radians(m_fovDeg), aspect, nearZ, farZ);
 }
 

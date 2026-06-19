@@ -77,8 +77,7 @@ void SettingsPanel::setRenderer(TerrainRenderer *renderer)
 void SettingsPanel::saveSettings() const
 {
     QSettings s;
-    s.setValue("render/wireframe",  m_wireframeCheck->isChecked());
-    s.setValue("render/normals",    m_normalsCheck->isChecked());
+    // Wireframe / normals are transient debug views (see loadSettings) — not persisted.
     s.setValue("atlas/size",        m_atlasSizeCombo->currentText());
     s.setValue("crs/selected",      m_crsCombo->currentIndex());
 }

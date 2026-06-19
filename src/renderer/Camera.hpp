@@ -34,12 +34,17 @@ public:
     void setFov(float deg) { m_fovDeg = deg; }
     void setSensitivity(float orbitSens, float panSens, float zoomSens);
 
+    // Radius of the scene being viewed; the projection far plane is sized to
+    // always contain it regardless of zoom (prevents clipping when zoomed in).
+    void setSceneRadius(float r) { m_sceneRadius = (r > 1e-3f) ? r : 1e-3f; }
+
 private:
     glm::vec3 m_target{0.f, 0.f, 0.f};
     float m_yaw      = 45.f;   // degrees
     float m_pitch    = 30.f;   // degrees, clamped ±89°
     float m_distance = 2000.f;
     float m_fovDeg   = 45.f;
+    float m_sceneRadius = 1.0e5f;  // generous default until set from the terrain
 
     float m_orbitSens = 0.3f;
     float m_panSens   = 0.5f;
