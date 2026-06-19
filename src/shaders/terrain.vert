@@ -26,9 +26,13 @@ void main()
     vUV = aUV;
 
     float range = uHeightMax - uHeightMin;
-    vHeightFactor = (range > 0.001)
+    float h = (range > 0.001)
         ? clamp((aPos.y - uHeightMin) / range, 0.0, 1.0)
         : 0.5;
+    // Gentle gamma (<1) widens the low/mid band so terrain whose area is mostly
+    // low (e.g. a peak rising from plains) shows colour variation instead of a
+    // single flat band, while the summit still reaches the top of the ramp.
+    vHeightFactor = pow(h, 0.72);
 
     gl_Position = uProjection * uView * worldPos;
 }

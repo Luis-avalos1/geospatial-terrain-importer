@@ -20,7 +20,8 @@ public:
     void upload(const MeshData &mesh);
 
     // Issue the draw call (must have a bound shader program).
-    void draw() const;
+    // Not const: calls non-const QOpenGLFunctions_4_1_Core members.
+    void draw();
 
     bool isUploaded() const { return m_vao != 0; }
     uint32_t indexCount() const { return m_indexCount; }

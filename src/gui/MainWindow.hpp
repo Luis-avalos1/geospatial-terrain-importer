@@ -29,6 +29,9 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
+    // Import a raster directly (used by the file menu and the launch dev hook).
+    void openPath(const QString &path);
+
 protected:
     void closeEvent(QCloseEvent *e) override;
 

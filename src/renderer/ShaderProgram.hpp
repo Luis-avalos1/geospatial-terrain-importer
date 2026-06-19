@@ -18,14 +18,15 @@ public:
     void load(const std::string &vertResourcePath,
               const std::string &fragResourcePath);
 
-    void bind()   const;
-    void release() const;
+    // Not const: these call non-const QOpenGLFunctions_4_1_Core members.
+    void bind();
+    void release();
 
-    void setUniform(const char *name, float v)              const;
-    void setUniform(const char *name, int v)                const;
-    void setUniform(const char *name, const glm::vec3 &v)   const;
-    void setUniform(const char *name, const glm::vec4 &v)   const;
-    void setUniform(const char *name, const glm::mat4 &v)   const;
+    void setUniform(const char *name, float v);
+    void setUniform(const char *name, int v);
+    void setUniform(const char *name, const glm::vec3 &v);
+    void setUniform(const char *name, const glm::vec4 &v);
+    void setUniform(const char *name, const glm::mat4 &v);
 
     bool isValid() const { return m_program != 0; }
 

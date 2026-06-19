@@ -67,7 +67,7 @@ void GpuMesh::upload(const MeshData &mesh)
     m_indexCount = static_cast<uint32_t>(mesh.indices.size());
 }
 
-void GpuMesh::draw() const
+void GpuMesh::draw()
 {
     if (!m_vao) return;
     glBindVertexArray(m_vao);

@@ -73,11 +73,13 @@ if(BUILD_GUI)
 
     find_package(OpenGL REQUIRED)
 
-    # Shaders (compiled into the binary as a Qt resource)
+    # Shaders + UI stylesheet (compiled into the binary as Qt resources)
     if(Qt6_FOUND)
         qt6_add_resources(SHADER_RCC src/shaders/shaders.qrc)
+        qt6_add_resources(STYLE_RCC  src/styles/style.qrc)
     else()
         qt5_add_resources(SHADER_RCC src/shaders/shaders.qrc)
+        qt5_add_resources(STYLE_RCC  src/styles/style.qrc)
     endif()
 
     set(RENDERER_SOURCES
@@ -100,6 +102,7 @@ if(BUILD_GUI)
         ${RENDERER_SOURCES}
         ${GUI_SOURCES}
         ${SHADER_RCC}
+        ${STYLE_RCC}
     )
 
     target_include_directories(terrain-importer PRIVATE src/)
@@ -111,11 +114,19 @@ if(BUILD_GUI)
     )
     apply_compiler_flags(terrain-importer)
 
-    # macOS: bundle-friendly RPATH
+    # macOS: produce a proper double-clickable .app bundle
     if(APPLE)
         set_target_properties(terrain-importer PROPERTIES
-            INSTALL_RPATH "@executable_path/../lib"
-            BUILD_WITH_INSTALL_RPATH TRUE
+            MACOSX_BUNDLE TRUE
+            MACOSX_BUNDLE_BUNDLE_NAME "Terrain Importer"
+            MACOSX_BUNDLE_GUI_IDENTIFIER "com.geospatial-tools.terrain-importer"
+            MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/Info.plist.in"
+            # Run in-place against Homebrew Qt during development; @rpath/Frameworks
+            # is where macdeployqt would place them for distribution.
+            INSTALL_RPATH "@executable_path/../Frameworks"
+            BUILD_WITH_INSTALL_RPATH FALSE
         )
     endif()
 else()

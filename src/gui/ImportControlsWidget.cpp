@@ -28,9 +28,10 @@ ImportControlsWidget::ImportControlsWidget(QWidget *parent)
 
     m_heightSpin = new QDoubleSpinBox(this);
     m_heightSpin->setRange(0.001, 1000.0);
-    m_heightSpin->setSingleStep(0.1);
-    m_heightSpin->setValue(1.0);
-    m_heightSpin->setDecimals(3);
+    m_heightSpin->setSingleStep(0.5);
+    m_heightSpin->setValue(1.5);   // a touch of vertical exaggeration reads better by default
+    m_heightSpin->setDecimals(2);
+    m_heightSpin->setToolTip("Vertical exaggeration (1.0 = true scale)");
     form->addRow("Height scale:", m_heightSpin);
 
     m_lodSpin = new QSpinBox(this);
@@ -60,6 +61,7 @@ ImportControlsWidget::ImportControlsWidget(QWidget *parent)
     outer->addWidget(grp);
 
     m_importBtn = new QPushButton("Import", this);
+    m_importBtn->setObjectName("ImportButton");   // styled as the primary action
     m_importBtn->setDefault(true);
     outer->addWidget(m_importBtn);
     outer->addStretch();

@@ -67,9 +67,20 @@ void TerrainRenderer::clearTerrain()
         glDeleteTextures(1, &m_atlasTex);
         m_atlasTex = 0;
     }
-    m_hasAtlas   = false;
-    m_lodMgr     = nullptr;
+    m_hasAtlas      = false;
+    m_lodMgr        = nullptr;
+    m_terrainCenter = glm::vec3(0.f);
+    m_sceneExtent   = 1.0f;
     doneCurrent();
+    update();
+}
+
+void TerrainRenderer::resetView()
+{
+    if (m_gpuMeshes.empty()) return;
+    const float cy = (m_heightMin + m_heightMax) * 0.5f;
+    m_camera.reset({0.f, cy, 0.f}, m_sceneExtent * 1.1f);
+    m_camera.setSensitivity(0.3f, 0.5f, m_sceneExtent * 0.04f);
     update();
 }
 
@@ -95,7 +106,11 @@ void TerrainRenderer::initializeGL()
 
 void TerrainRenderer::resizeGL(int w, int h)
 {
-    glViewport(0, 0, w, h);
+    // resizeGL passes device-independent (logical) pixels, but the widget's
+    // framebuffer is logical * devicePixelRatio. On a Retina display (dpr 2)
+    // the viewport must use physical pixels or the scene fills only a quarter.
+    const qreal dpr = devicePixelRatioF();
+    glViewport(0, 0, static_cast<int>(w * dpr), static_cast<int>(h * dpr));
 }
 
 void TerrainRenderer::paintGL()
@@ -116,8 +131,8 @@ void TerrainRenderer::paintGL()
 
     m_shader.bind();
 
-    // Matrices
-    const glm::mat4 model(1.0f);
+    // Matrices — translate terrain to the origin (keeps camera math precise).
+    const glm::mat4 model = glm::translate(glm::mat4(1.0f), -m_terrainCenter);
     const glm::mat4 view  = m_camera.viewMatrix();
     const glm::mat4 proj  = m_camera.projectionMatrix(width(), height());
 
@@ -144,9 +159,10 @@ void TerrainRenderer::paintGL()
         m_shader.setUniform("uAtlasRect", glm::vec4(0,0,1,1));
     }
 
-    // LOD selection
-    const float dist = m_camera.distanceTo(glm::vec3(0.f));
-    const LodLevel &lod = m_lodMgr->selectLod(dist);
+    // LOD selection — scale the camera distance to the terrain's extent so the
+    // LOD switch distances (calibrated in the ~hundreds) work at geo scale.
+    const float lodDist = (m_camera.distance() / m_sceneExtent) * 4000.0f;
+    const LodLevel &lod = m_lodMgr->selectLod(lodDist);
 
     // Find the GpuMesh matching the selected LOD level
     const auto &lodLevels = m_lodMgr->levels();
@@ -181,11 +197,15 @@ void TerrainRenderer::uploadLodLevels()
 
     m_heightMin = std::numeric_limits<float>::max();
     m_heightMax = std::numeric_limits<float>::lowest();
+    float minX = std::numeric_limits<float>::max(), maxX = std::numeric_limits<float>::lowest();
+    float minZ = std::numeric_limits<float>::max(), maxZ = std::numeric_limits<float>::lowest();
 
     for (const LodLevel &lod : m_lodMgr->levels()) {
         for (const Vertex &v : lod.mesh.vertices) {
             m_heightMin = std::min(m_heightMin, v.y);
             m_heightMax = std::max(m_heightMax, v.y);
+            minX = std::min(minX, v.x); maxX = std::max(maxX, v.x);
+            minZ = std::min(minZ, v.z); maxZ = std::max(maxZ, v.z);
         }
 
         auto gm = std::make_unique<GpuMesh>();
@@ -193,11 +213,24 @@ void TerrainRenderer::uploadLodLevels()
         m_gpuMeshes.push_back(std::move(gm));
     }
 
-    // Recentre camera on terrain
-    const float cx = 0.f;
+    // The mesh sits at raw geo coordinates (eastings/northings can be in the
+    // millions). Translate it to the origin in X/Z via the model matrix (Y is
+    // left as real elevation for the height colormap) and frame the camera on
+    // the actual horizontal extent — otherwise the terrain is off-screen.
+    if (maxX < minX || maxZ < minZ) {            // no finite vertices (unreachable today)
+        m_terrainCenter = glm::vec3(0.f);
+        m_sceneExtent   = 1.0f;
+    } else {
+        m_terrainCenter = glm::vec3((minX + maxX) * 0.5f, 0.f, (minZ + maxZ) * 0.5f);
+        m_sceneExtent   = std::max(maxX - minX, maxZ - minZ);
+        if (!(m_sceneExtent > 0.f)) m_sceneExtent = 1.0f;
+    }
+
     const float cy = (m_heightMin + m_heightMax) * 0.5f;
-    const float cz = 0.f;
-    m_camera.reset({cx, cy, cz}, m_heightMax * 3.0f + 1000.f);
+    m_camera.reset({0.f, cy, 0.f}, m_sceneExtent * 1.1f);
+    // Scale zoom to the scene so the wheel moves a useful fraction per notch
+    // (default 50 units/notch is imperceptible on a ~20 km-wide terrain).
+    m_camera.setSensitivity(0.3f, 0.5f, m_sceneExtent * 0.04f);
 }
 
 // ── Mouse input ───────────────────────────────────────────────────────────────

@@ -66,7 +66,11 @@ glm::mat4 Camera::projectionMatrix(int w, int h) const
 {
     if (h == 0) h = 1;
     const float aspect = static_cast<float>(w) / static_cast<float>(h);
-    return glm::perspective(glm::radians(m_fovDeg), aspect, 0.1f, 1e6f);
+    // Scale near/far with the orbit distance so depth precision stays good at
+    // any zoom and the scene (radius ~ a few × distance) is never clipped.
+    const float nearZ = std::max(0.05f, m_distance * 0.01f);
+    const float farZ  = m_distance * 50.0f;
+    return glm::perspective(glm::radians(m_fovDeg), aspect, nearZ, farZ);
 }
 
 float Camera::distanceTo(const glm::vec3 &point) const

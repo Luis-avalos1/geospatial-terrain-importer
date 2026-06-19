@@ -15,18 +15,24 @@ uniform float     uShowNormals; // 0 or 1
 
 out vec4 fragColor;
 
-// Simple 4-stop height colormap: water → grass → rock → snow
+// Multi-stop hypsometric ramp: lowland green → dry highland → rock → snow.
+// More stops than a basic 4-colour ramp so adjacent elevations stay distinct.
 vec3 heightColormap(float t)
 {
-    const vec3 water = vec3(0.10, 0.28, 0.50);
-    const vec3 grass = vec3(0.25, 0.52, 0.20);
-    const vec3 rock  = vec3(0.50, 0.43, 0.35);
-    const vec3 snow  = vec3(0.95, 0.97, 1.00);
+    const vec3 c0 = vec3(0.16, 0.40, 0.22);  // deep green lowland
+    const vec3 c1 = vec3(0.45, 0.58, 0.26);  // green
+    const vec3 c2 = vec3(0.72, 0.69, 0.36);  // khaki / dry grass
+    const vec3 c3 = vec3(0.62, 0.47, 0.31);  // tan / soil
+    const vec3 c4 = vec3(0.46, 0.39, 0.35);  // rock (grey-brown)
+    const vec3 c5 = vec3(0.74, 0.74, 0.76);  // bare light rock
+    const vec3 c6 = vec3(0.98, 0.99, 1.00);  // snow
 
-    if (t < 0.25) return mix(water, grass, t / 0.25);
-    if (t < 0.55) return mix(grass, rock,  (t - 0.25) / 0.30);
-    if (t < 0.80) return mix(rock,  snow,  (t - 0.55) / 0.25);
-    return snow;
+    if (t < 0.16) return mix(c0, c1, t / 0.16);
+    if (t < 0.36) return mix(c1, c2, (t - 0.16) / 0.20);
+    if (t < 0.55) return mix(c2, c3, (t - 0.36) / 0.19);
+    if (t < 0.72) return mix(c3, c4, (t - 0.55) / 0.17);
+    if (t < 0.88) return mix(c4, c5, (t - 0.72) / 0.16);
+    return mix(c5, c6, clamp((t - 0.88) / 0.12, 0.0, 1.0));
 }
 
 void main()

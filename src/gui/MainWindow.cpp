@@ -24,6 +24,7 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QCloseEvent>
 
+#include <cstdlib>
 #include <memory>
 #include <stdexcept>
 
@@ -59,6 +60,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_settings->setRenderer(m_renderer);
 
     auto *dock = new QDockWidget("Settings", this);
+    dock->setObjectName("SettingsDock");   // needed by saveState()
     dock->setWidget(m_settings);
     dock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
     addDockWidget(Qt::RightDockWidgetArea, dock);
@@ -83,6 +85,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_watcher, &QFutureWatcher<LoadResult>::finished,
             this,       &MainWindow::onLoadFinished);
 
+    // Optional: start the file browser at a specific folder (dev/screenshots).
+    if (const char *root = std::getenv("TERRAIN_ROOT"); root && *root)
+        m_fileBrowser->setRootPath(QString::fromUtf8(root));
+
     // Restore window geometry
     QSettings s;
     restoreGeometry(s.value("window/geometry").toByteArray());
@@ -90,6 +96,11 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 MainWindow::~MainWindow() = default;
+
+void MainWindow::openPath(const QString &path)
+{
+    if (!path.isEmpty()) loadFile(path);
+}
 
 void MainWindow::closeEvent(QCloseEvent *e)
 {

@@ -62,22 +62,22 @@ void ShaderProgram::load(const std::string &vertPath, const std::string &fragPat
     m_program = prog;
 }
 
-void ShaderProgram::bind()    const { glUseProgram(m_program); }
-void ShaderProgram::release() const { glUseProgram(0); }
+void ShaderProgram::bind()    { glUseProgram(m_program); }
+void ShaderProgram::release() { glUseProgram(0); }
 
-void ShaderProgram::setUniform(const char *name, float v) const {
+void ShaderProgram::setUniform(const char *name, float v) {
     glUniform1f(glGetUniformLocation(m_program, name), v);
 }
-void ShaderProgram::setUniform(const char *name, int v) const {
+void ShaderProgram::setUniform(const char *name, int v) {
     glUniform1i(glGetUniformLocation(m_program, name), v);
 }
-void ShaderProgram::setUniform(const char *name, const glm::vec3 &v) const {
+void ShaderProgram::setUniform(const char *name, const glm::vec3 &v) {
     glUniform3fv(glGetUniformLocation(m_program, name), 1, glm::value_ptr(v));
 }
-void ShaderProgram::setUniform(const char *name, const glm::vec4 &v) const {
+void ShaderProgram::setUniform(const char *name, const glm::vec4 &v) {
     glUniform4fv(glGetUniformLocation(m_program, name), 1, glm::value_ptr(v));
 }
-void ShaderProgram::setUniform(const char *name, const glm::mat4 &m) const {
+void ShaderProgram::setUniform(const char *name, const glm::mat4 &m) {
     glUniformMatrix4fv(glGetUniformLocation(m_program, name), 1, GL_FALSE, glm::value_ptr(m));
 }
 

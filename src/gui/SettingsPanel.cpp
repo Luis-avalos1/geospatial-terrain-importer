@@ -66,6 +66,12 @@ SettingsPanel::SettingsPanel(QWidget *parent)
 void SettingsPanel::setRenderer(TerrainRenderer *renderer)
 {
     m_renderer = renderer;
+    // Sync the current toggle states to the renderer (loadSettings ran before
+    // the renderer existed, so the renderer would otherwise miss them).
+    if (m_renderer) {
+        m_renderer->setWireframe(m_wireframeCheck->isChecked());
+        m_renderer->setShowNormals(m_normalsCheck->isChecked());
+    }
 }
 
 void SettingsPanel::saveSettings() const
@@ -80,8 +86,9 @@ void SettingsPanel::saveSettings() const
 void SettingsPanel::loadSettings()
 {
     QSettings s;
-    m_wireframeCheck->setChecked(s.value("render/wireframe", false).toBool());
-    m_normalsCheck->setChecked(s.value("render/normals",   false).toBool());
+    // Wireframe / normals are transient debug views — always start cleared.
+    m_wireframeCheck->setChecked(false);
+    m_normalsCheck->setChecked(false);
     m_atlasSizeCombo->setCurrentText(s.value("atlas/size", "4096").toString());
     m_crsCombo->setCurrentIndex(s.value("crs/selected", 0).toInt());
 }
@@ -105,7 +112,5 @@ void SettingsPanel::onAtlasSizeChanged(int)
 
 void SettingsPanel::onResetCamera()
 {
-    if (m_renderer)
-        m_renderer->camera().reset({0.f, 0.f, 0.f}, 2000.f);
-    if (m_renderer) m_renderer->update();
+    if (m_renderer) m_renderer->resetView();
 }

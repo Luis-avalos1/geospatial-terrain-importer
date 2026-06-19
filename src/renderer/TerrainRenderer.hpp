@@ -25,6 +25,9 @@ public:
     void loadAtlasTexture(const TextureAtlas &atlas);
     void clearTerrain();
 
+    // Re-frame the camera on the currently loaded terrain's bounds.
+    void resetView();
+
     // GUI toggles
     void setWireframe(bool on);
     void setShowNormals(bool on);
@@ -64,6 +67,12 @@ private:
     // Height bounds for the colormap uniform
     float  m_heightMin = 0.f;
     float  m_heightMax = 1000.f;
+
+    // Terrain meshes are built in raw (often huge, e.g. Web Mercator) world
+    // coordinates. We translate them to the origin via the model matrix so the
+    // camera math stays in small, precise numbers, and frame on the bounds.
+    glm::vec3 m_terrainCenter{0.f, 0.f, 0.f};  // X/Z centroid (Y kept = real height)
+    float     m_sceneExtent = 1.0f;            // max horizontal span
 
     // Atlas UV rect for the first tile (single-tile common case)
     float m_atlasU0 = 0.f, m_atlasV0 = 0.f, m_atlasU1 = 1.f, m_atlasV1 = 1.f;

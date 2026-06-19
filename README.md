@@ -1,7 +1,7 @@
 # Geospatial Terrain Importer
 
 [![CI](https://github.com/Luis-avalos1/geospatial-terrain-importer/actions/workflows/ci.yml/badge.svg)](https://github.com/Luis-avalos1/geospatial-terrain-importer/actions/workflows/ci.yml)
-[![Live demo](https://img.shields.io/badge/demo-live-4c9be8)](https://luis-avalos1.github.io/geospatial-terrain-importer/)
+[![Live showcase](https://img.shields.io/badge/showcase-live-4c9be8)](https://luis-avalos1.github.io/geospatial-terrain-importer/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus)
 ![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)
@@ -11,24 +11,32 @@ elevation data (GeoTIFF / DEM rasters) into interactive, level-of-detail 3D
 terrain. Load a digital elevation model, optionally drape a satellite image
 over it, and fly around the result in an OpenGL viewport.
 
-> **Status:** core algorithms are unit-tested and CI-verified; the GUI is built
-> on Qt + OpenGL 4.1. See the [roadmap](#roadmap) for what's next.
+![Terrain Importer desktop application — Mount Kilimanjaro](screenshots/desktop.png)
+
+> **Status:** core algorithms are unit-tested and CI-verified; the C++/Qt +
+> OpenGL 4.1 desktop app builds, runs, and renders (on macOS as
+> `terrain-importer.app`). See the [roadmap](#roadmap) for what's next.
 
 ---
 
-## Live demo
+## Web showcase
 
-An interactive WebGL viewer (Three.js) running this project's pipeline in the
-browser:
+A browser **showcase** (Three.js / WebGL) of what the project produces:
 
 ### **[luis-avalos1.github.io/geospatial-terrain-importer](https://luis-avalos1.github.io/geospatial-terrain-importer/)**
 
-Orbit the camera, switch between **Mount Fuji** and **San Francisco**, toggle
-hillshade / elevation-colormap / wireframe surfaces, step through the
-level-of-detail meshes, and adjust vertical exaggeration. The terrain is real
-SRTM/NED elevation (via the public AWS Terrain Tiles open dataset) resampled
-into LOD heightfields and draped with a generated texture - the same processing
-described below, exported to static assets the page renders client-side.
+Orbit the camera, switch between **Mount Fuji**, **San Francisco**, **Grand
+Canyon** and **Mount Everest**, toggle hillshade / elevation-colormap /
+wireframe surfaces, step through the level-of-detail meshes, adjust the sun and
+vertical exaggeration, and upload your own GeoTIFF DEM. The terrain is real
+SRTM/NED elevation (public AWS Terrain Tiles) resampled into LOD heightfields by
+this project's pipeline and draped with a generated texture.
+
+> It's a **showcase, not the engine itself**: the built-in terrains are real
+> output of the project's pipeline, but the in-browser rendering (mesh build,
+> LOD, hillshade, GeoTIFF upload) is a WebGL/JS reimplementation of the same
+> techniques. The actual C++/Qt/OpenGL application — the real engine — is the
+> desktop app below.
 
 ---
 
@@ -109,8 +117,13 @@ is what makes it testable headlessly and in CI.
 ### Configure & build
 
 ```bash
-# Full build (GUI + core + tests)
-cmake -B build -DCMAKE_BUILD_TYPE=Release
+# macOS (Homebrew): Qt is keg-only, so point CMake at the Homebrew prefixes.
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_GUI=ON \
+  -DCMAKE_PREFIX_PATH="$(brew --prefix qt);$(brew --prefix gdal);$(brew --prefix glm)"
+cmake --build build -j
+
+# Linux: the system packages are on the default CMake search path.
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_GUI=ON
 cmake --build build -j
 
 # Headless build — just the core library and tests (no Qt/OpenGL needed)
@@ -118,14 +131,17 @@ cmake -B build -DBUILD_GUI=OFF -DBUILD_TESTING=ON
 cmake --build build -j
 ```
 
-The GUI binary is `build/terrain-importer`.
+On macOS this produces a double-clickable bundle, `build/terrain-importer.app`;
+on Linux it produces the binary `build/terrain-importer`. The app targets
+OpenGL 4.1 Core (the macOS ceiling).
 
 ## Usage
 
 ### Desktop app
 
 ```bash
-./build/terrain-importer
+open build/terrain-importer.app   # macOS
+./build/terrain-importer          # Linux
 ```
 
 Open a raster from **File → Open GeoTIFF…** (or select one in the file browser
