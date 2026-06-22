@@ -4,6 +4,7 @@
 #include <QTreeView>
 #include <QFileSystemModel>
 #include <QHeaderView>
+#include <QItemSelectionModel>
 #include <QDir>
 
 FileBrowserPanel::FileBrowserPanel(QWidget *parent)
@@ -45,6 +46,16 @@ void FileBrowserPanel::setRootPath(const QString &path)
 QString FileBrowserPanel::rootPath() const
 {
     return m_model->rootPath();
+}
+
+void FileBrowserPanel::demoSelect(const QString &path)
+{
+    const QModelIndex idx = m_model->index(path);
+    if (!idx.isValid()) return;   // model may not have populated this row yet
+    m_tree->scrollTo(idx);
+    m_tree->setCurrentIndex(idx);
+    m_tree->selectionModel()->select(idx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+    emit fileActivated(m_model->filePath(idx));
 }
 
 void FileBrowserPanel::onActivated(const QModelIndex &index)

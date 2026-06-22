@@ -73,6 +73,9 @@ data/
 batch_summary.json
 lod_manifest.json
 
+# Demo video lives on the Releases page, not in the repo (see README)
+media/*.mp4
+
 # Editor / tooling local config
 *.swp
 *.swo

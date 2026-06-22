@@ -19,6 +19,20 @@ over it, and fly around the result in an OpenGL viewport.
 
 ---
 
+## Demo
+
+A walkthrough of the desktop engine: loading a Mount Everest DEM, building the
+LOD mesh, then stepping through the render settings — orbit, live vertical
+exaggeration, wireframe, surface normals, and distance-based level of detail.
+
+[![Terrain Importer — demo walkthrough](media/terrain-importer-demo.gif)](https://github.com/Luis-avalos1/geospatial-terrain-importer/releases/download/demo/terrain-importer-demo.mp4)
+
+> The clip above is a trimmed preview — the
+> [full ~1-minute walkthrough](https://github.com/Luis-avalos1/geospatial-terrain-importer/releases/download/demo/terrain-importer-demo.mp4)
+> (1080p) is on the releases page.
+
+---
+
 ## Web showcase
 
 A browser **showcase** (Three.js / WebGL) of what the project produces:
@@ -53,8 +67,8 @@ this project's pipeline and draped with a generated texture.
 - **Texture atlas packing** — shelf-packs satellite/ortho tiles into a single
   GPU texture with a UV sidecar.
 - **Coordinate transforms** — thin OGR/PROJ wrapper with WGS-84 → UTM helpers.
-- **Interactive renderer** — orbit camera, height colormap, wireframe / normal
-  debug views, and a live FPS counter.
+- **Interactive renderer** — orbit camera, height colormap, live vertical
+  exaggeration, wireframe / normal debug views, and a live FPS counter.
 - **Python pipeline** — headless batch conversion, LOD generation, and atlas
   packing for server-side or scripted workflows.
 

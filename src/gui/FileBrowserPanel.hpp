@@ -15,6 +15,9 @@ public:
     void setRootPath(const QString &path);
     QString rootPath() const;
 
+    // Visibly select a file in the tree and emit fileActivated (demo-capture mode).
+    void demoSelect(const QString &path);
+
 signals:
     void fileActivated(const QString &path);
 

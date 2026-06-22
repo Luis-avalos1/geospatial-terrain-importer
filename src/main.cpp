@@ -75,5 +75,16 @@ int main(int argc, char *argv[])
         });
     }
 
+    // TERRAIN_DEMO=<outdir>  +  TERRAIN_DEMO_DEM=<dem>  record the demo-video frames
+    if (const char *demoOut = std::getenv("TERRAIN_DEMO"); demoOut && *demoOut) {
+        const QString outDir = QString::fromUtf8(demoOut);
+        const char *demEnv = std::getenv("TERRAIN_DEMO_DEM");
+        const QString dem = demEnv && *demEnv ? QString::fromUtf8(demEnv) : QString();
+        // Let the window map and the file model start populating first.
+        QTimer::singleShot(500, [&win, dem, outDir]() {
+            win.runCaptureDemo(dem, outDir);
+        });
+    }
+
     return app.exec();
 }

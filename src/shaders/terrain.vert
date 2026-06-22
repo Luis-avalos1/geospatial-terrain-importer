@@ -9,6 +9,7 @@ uniform mat4 uView;
 uniform mat4 uProjection;
 uniform float uHeightMin;
 uniform float uHeightMax;
+uniform float uHeightScale;  // live vertical exaggeration (1.0 = as loaded)
 
 out vec3 vWorldPos;
 out vec3 vNormal;
@@ -17,14 +18,24 @@ out float vHeightFactor;  // 0..1 for colormap fallback
 
 void main()
 {
-    vec4 worldPos = uModel * vec4(aPos, 1.0);
+    float hs = max(uHeightScale, 1e-4);
+
+    // Exaggerate elevation about sea level (y = 0) so the relief can be amplified
+    // interactively without re-importing the raster.
+    vec3 pos = vec3(aPos.x, aPos.y * hs, aPos.z);
+    vec4 worldPos = uModel * vec4(pos, 1.0);
     vWorldPos = worldPos.xyz;
 
-    // Normal in world space (no non-uniform scale, so mat3 is fine here)
-    vNormal = normalize(mat3(uModel) * aNormal);
+    // Scaling height by hs scales the surface normal's vertical term by 1/hs
+    // (inverse-transpose of the diag(1, hs, 1) scale) — keeps lighting correct
+    // as the exaggeration changes. uModel is a pure translation, so mat3 is fine.
+    vec3 n = normalize(vec3(aNormal.x, aNormal.y / hs, aNormal.z));
+    vNormal = normalize(mat3(uModel) * n);
 
     vUV = aUV;
 
+    // Colour from the *unscaled* elevation so the hypsometric ramp stays put as
+    // the exaggeration slider moves.
     float range = uHeightMax - uHeightMin;
     float h = (range > 0.001)
         ? clamp((aPos.y - uHeightMin) / range, 0.0, 1.0)

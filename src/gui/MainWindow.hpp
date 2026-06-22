@@ -15,6 +15,7 @@ class TextureAtlas;
 class QLabel;
 class QSplitter;
 class QDockWidget;
+class QTimer;
 
 // Package produced by the background worker
 struct LoadResult {
@@ -32,6 +33,11 @@ public:
     // Import a raster directly (used by the file menu and the launch dev hook).
     void openPath(const QString &path);
 
+    // Records the demo reel: scripts the full upload→render→settings tour and
+    // writes one numbered frame per tick to outDir, then quits. The frames are
+    // assembled into the demo video with ffmpeg.
+    void runCaptureDemo(const QString &demPath, const QString &outDir);
+
 protected:
     void closeEvent(QCloseEvent *e) override;
 
@@ -45,6 +51,13 @@ private:
     void setupMenuBar();
     void setupStatusBar();
     void loadFile(const QString &path);
+
+    // Demo-capture mode helpers (see runCaptureDemo).
+    void demoTick();
+
+    QTimer *m_demoTimer = nullptr;
+    QString m_demoOutDir;
+    int     m_demoFrame = 0;
 
     TerrainRenderer      *m_renderer    = nullptr;
     FileBrowserPanel     *m_fileBrowser = nullptr;

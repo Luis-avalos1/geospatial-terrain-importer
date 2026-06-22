@@ -33,6 +33,10 @@ public:
     void setShowNormals(bool on);
     void setHeightScale(float s);
 
+    // Scripted camera moves for the demo-capture mode (see MainWindow).
+    void demoOrbit(float dxPixels, float dyPixels);
+    void demoZoom(float notches);
+
 signals:
     void fpsUpdated(double fps);
 

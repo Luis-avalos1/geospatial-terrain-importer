@@ -6,6 +6,8 @@ class QComboBox;
 class QSpinBox;
 class QCheckBox;
 class QPushButton;
+class QSlider;
+class QLabel;
 
 class TerrainRenderer;
 
@@ -20,9 +22,15 @@ public:
     void saveSettings() const;
     void loadSettings();
 
+    // Drive the controls programmatically (demo-capture mode) via the real widgets.
+    void demoSetWireframe(bool on);
+    void demoSetNormals(bool on);
+    void demoSetExaggeration(double factor);
+
 private slots:
     void onWireframeToggled(bool on);
     void onNormalsToggled(bool on);
+    void onExaggerationChanged(int sliderValue);
     void onAtlasSizeChanged(int idx);
     void onResetCamera();
 
@@ -33,5 +41,7 @@ private:
     QComboBox *m_crsCombo       = nullptr;
     QCheckBox *m_wireframeCheck = nullptr;
     QCheckBox *m_normalsCheck   = nullptr;
+    QSlider   *m_exaggSlider    = nullptr;
+    QLabel    *m_exaggValue     = nullptr;
     QPushButton *m_resetCamBtn  = nullptr;
 };

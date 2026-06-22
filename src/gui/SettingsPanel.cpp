@@ -9,6 +9,8 @@
 #include <QCheckBox>
 #include <QPushButton>
 #include <QSettings>
+#include <QSlider>
+#include <QHBoxLayout>
 #include <QLabel>
 
 SettingsPanel::SettingsPanel(QWidget *parent)
@@ -26,6 +28,23 @@ SettingsPanel::SettingsPanel(QWidget *parent)
 
     m_normalsCheck = new QCheckBox("Show normals", this);
     renderForm->addRow(m_normalsCheck);
+
+    // Live vertical exaggeration. Slider units are hundredths (100 = 1.0×);
+    // range 0.5×–3.0×.
+    m_exaggSlider = new QSlider(Qt::Horizontal, this);
+    m_exaggSlider->setRange(50, 300);
+    m_exaggSlider->setSingleStep(5);
+    m_exaggSlider->setPageStep(25);
+    m_exaggSlider->setValue(100);
+    m_exaggValue = new QLabel("1.0×", this);
+    m_exaggValue->setMinimumWidth(36);
+    m_exaggValue->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    auto *exaggRow = new QWidget(this);
+    auto *exaggLayout = new QHBoxLayout(exaggRow);
+    exaggLayout->setContentsMargins(0, 0, 0, 0);
+    exaggLayout->addWidget(m_exaggSlider, 1);
+    exaggLayout->addWidget(m_exaggValue);
+    renderForm->addRow("Exaggeration:", exaggRow);
 
     m_resetCamBtn = new QPushButton("Reset camera", this);
     renderForm->addRow(m_resetCamBtn);
@@ -56,6 +75,7 @@ SettingsPanel::SettingsPanel(QWidget *parent)
 
     connect(m_wireframeCheck, &QCheckBox::toggled, this, &SettingsPanel::onWireframeToggled);
     connect(m_normalsCheck,   &QCheckBox::toggled, this, &SettingsPanel::onNormalsToggled);
+    connect(m_exaggSlider,    &QSlider::valueChanged, this, &SettingsPanel::onExaggerationChanged);
     connect(m_resetCamBtn,    &QPushButton::clicked, this, &SettingsPanel::onResetCamera);
     connect(m_atlasSizeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &SettingsPanel::onAtlasSizeChanged);
@@ -71,6 +91,7 @@ void SettingsPanel::setRenderer(TerrainRenderer *renderer)
     if (m_renderer) {
         m_renderer->setWireframe(m_wireframeCheck->isChecked());
         m_renderer->setShowNormals(m_normalsCheck->isChecked());
+        m_renderer->setHeightScale(m_exaggSlider->value() / 100.0f);
     }
 }
 
@@ -88,6 +109,7 @@ void SettingsPanel::loadSettings()
     // Wireframe / normals are transient debug views — always start cleared.
     m_wireframeCheck->setChecked(false);
     m_normalsCheck->setChecked(false);
+    m_exaggSlider->setValue(100);  // 1.0× — transient, like the debug toggles
     m_atlasSizeCombo->setCurrentText(s.value("atlas/size", "4096").toString());
     m_crsCombo->setCurrentIndex(s.value("crs/selected", 0).toInt());
 }
@@ -104,6 +126,15 @@ void SettingsPanel::onNormalsToggled(bool on)
     saveSettings();
 }
 
+void SettingsPanel::onExaggerationChanged(int sliderValue)
+{
+    const double factor = sliderValue / 100.0;
+    if (m_exaggValue)
+        m_exaggValue->setText(QString::number(factor, 'f', 1) + QStringLiteral("×"));
+    if (m_renderer)
+        m_renderer->setHeightScale(static_cast<float>(factor));
+}
+
 void SettingsPanel::onAtlasSizeChanged(int)
 {
     saveSettings();
@@ -112,4 +143,13 @@ void SettingsPanel::onAtlasSizeChanged(int)
 void SettingsPanel::onResetCamera()
 {
     if (m_renderer) m_renderer->resetView();
+}
+
+// ── Programmatic control (demo-capture mode) ────────────────────────────────────
+
+void SettingsPanel::demoSetWireframe(bool on)    { m_wireframeCheck->setChecked(on); }
+void SettingsPanel::demoSetNormals(bool on)      { m_normalsCheck->setChecked(on); }
+void SettingsPanel::demoSetExaggeration(double factor)
+{
+    m_exaggSlider->setValue(static_cast<int>(factor * 100.0 + 0.5));
 }

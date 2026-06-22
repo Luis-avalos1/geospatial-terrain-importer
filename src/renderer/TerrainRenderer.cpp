@@ -91,6 +91,20 @@ void TerrainRenderer::setWireframe(bool on)  { m_wireframe   = on;  update(); }
 void TerrainRenderer::setShowNormals(bool on) { m_showNormals = on;  update(); }
 void TerrainRenderer::setHeightScale(float s) { m_heightScale = s;   update(); }
 
+// Scripted camera moves used by the demo-capture mode; they mirror the mouse
+// handlers so a recorded fly-through matches live interaction.
+void TerrainRenderer::demoOrbit(float dxPixels, float dyPixels)
+{
+    m_camera.orbit(dxPixels, dyPixels);
+    update();
+}
+
+void TerrainRenderer::demoZoom(float notches)
+{
+    m_camera.zoom(notches);
+    update();
+}
+
 // ── GL lifecycle ──────────────────────────────────────────────────────────────
 
 void TerrainRenderer::initializeGL()
@@ -148,6 +162,7 @@ void TerrainRenderer::paintGL()
     m_shader.setUniform("uLightDir",   glm::normalize(glm::vec3(0.6f, 1.0f, 0.4f)));
     m_shader.setUniform("uWireframe",  m_wireframe   ? 1.0f : 0.0f);
     m_shader.setUniform("uShowNormals",m_showNormals ? 1.0f : 0.0f);
+    m_shader.setUniform("uHeightScale",m_heightScale);
 
     // Texture
     if (m_hasAtlas) {
